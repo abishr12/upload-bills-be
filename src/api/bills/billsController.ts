@@ -1,10 +1,10 @@
 import type { Request, Response } from "express";
-import { expensesService } from "./expensesService";
+import { billsService } from "./billsService";
 
-class ExpensesController {
+class BillsController {
   public async getAllExpenses(req: Request, res: Response): Promise<void> {
     try {
-      const expenses = await expensesService.findAll();
+      const expenses = await billsService.findAll();
       res.status(200).json(expenses);
     } catch (error) {
       res.status(500).json({ message: "Error fetching expenses", error });
@@ -12,4 +12,4 @@ class ExpensesController {
   }
 }
 
-export default new ExpensesController();
+export default new BillsController();

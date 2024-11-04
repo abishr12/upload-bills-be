@@ -3,8 +3,8 @@ import { z } from "zod";
 
 import { commonValidations } from "@/common/utils/commonValidation";
 
-export type Expense = z.infer<typeof ExpenseSchema>;
-export const ExpenseSchema = z.object({
+export type Bill = z.infer<typeof BillsSchema>;
+export const BillsSchema = z.object({
   id: z.number(),
   amount: z.number(),
   date: z.string(),
