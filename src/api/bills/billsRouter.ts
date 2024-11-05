@@ -20,3 +20,12 @@ billsRegistry.registerPath({
 });
 
 billsRouter.get("/", BillsController.getAllExpenses);
+
+billsRegistry.registerPath({
+  method: "post",
+  path: "/bills",
+  tags: ["Bills"],
+  responses: createApiResponse(z.null(), "Success"),
+});
+
+billsRouter.post("/", BillsController.uploadBills);
