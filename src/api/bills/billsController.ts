@@ -13,7 +13,6 @@ class BillsController {
 
   public async uploadBills(req: Request, res: Response): Promise<void> {
     try {
-
       await billsService.uploadBills(req);
       res.status(200).json({ message: "Bills uploaded successfully" });
     } catch (error) {

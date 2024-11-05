@@ -4,8 +4,11 @@ import { z } from "zod";
 
 import { createApiResponse } from "@/api-docs/openAPIResponseBuilders";
 import { validateRequest } from "@/common/utils/httpHandlers";
+import multer from "multer";
 import BillsController from "./billsController";
 import { BillsSchema } from "./billsModel";
+
+const upload = multer();
 
 export const billsRegistry = new OpenAPIRegistry();
 export const billsRouter: Router = express.Router();
@@ -28,4 +31,4 @@ billsRegistry.registerPath({
   responses: createApiResponse(z.null(), "Success"),
 });
 
-billsRouter.post("/", BillsController.uploadBills);
+billsRouter.post("/", upload.single("file"), BillsController.uploadBills);
