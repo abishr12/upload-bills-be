@@ -8,21 +8,6 @@ import csv from "csv-parser";
 import type { Request, Response } from "express";
 import { BillsRepository } from "./billsRepository";
 
-export const bills: Bill[] = [
-  {
-    id: 1,
-    amount: 1000,
-    date: "2021-01-01",
-    vendorName: "Amazon",
-  },
-  {
-    id: 2,
-    amount: 2000,
-    date: "2021-01-02",
-    vendorName: "Walmart",
-  },
-];
-
 export class BillsService {
   private billsRepository: BillsRepository;
 
@@ -33,6 +18,7 @@ export class BillsService {
   // Retrieves all bills from the database
   async findAll(): Promise<ServiceResponse<Bill[] | null>> {
     try {
+      const bills = await this.billsRepository.findAllAsync();
       if (!bills || bills.length === 0) {
         return ServiceResponse.failure("No Bills found", null, StatusCodes.NOT_FOUND);
       }
@@ -47,7 +33,7 @@ export class BillsService {
       );
     }
   }
-  isDuplicate(bill: Bill): boolean {
+  isDuplicate(bill: Bill, bills: Bill[]): boolean {
     const areVendorsSimilar = (vendor1: string, vendor2: string) => {
       // Convert both strings to lowercase for case-insensitive comparison
       const v1 = vendor1.toLowerCase();
@@ -119,18 +105,22 @@ export class BillsService {
     // @ts-ignore
     const stream = bufferToStream(req.file.buffer);
 
-    stream
+    await stream
       .pipe(csv())
       .on("data", (data: Bill) => newBills.push(data)) // Collect each row of CSV data
       .on("end", () => {
-        console.log("newBills", newBills);
+        // Dedupe Bills
+        newBills.forEach((newBill) => {
+          if (!this.isDuplicate(newBill, bills)) {
+            bills.push(newBill);
+          }
+        });
       })
       .on("error", (error: Error) => {
         console.error("Error parsing CSV:", error);
         throw Error("Error parsing CSV file");
       });
 
-    newBills.filter((newBill) => !this.isDuplicate(newBill));
     return;
   }
 }
