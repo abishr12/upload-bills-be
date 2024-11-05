@@ -5,8 +5,8 @@ extendZodWithOpenApi(z);
 
 export type Bill = z.infer<typeof BillsSchema>;
 export const BillsSchema = z.object({
-  id: z.number(),
-  amount: z.number(),
+  id: z.string(),
+  amount: z.string(),
   date: z.string(),
   vendorName: z.string(),
 });

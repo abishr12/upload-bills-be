@@ -6,6 +6,7 @@ import { ServiceResponse } from "@/common/models/serviceResponse";
 import { logger } from "@/server";
 import csv from "csv-parser";
 import type { Request, Response } from "express";
+import { v4 as uuidv4 } from "uuid";
 import { BillsRepository } from "./billsRepository";
 
 export class BillsService {
@@ -107,7 +108,12 @@ export class BillsService {
 
     await stream
       .pipe(csv())
-      .on("data", (data: Bill) => newBills.push(data)) // Collect each row of CSV data
+      .on("headers", (headers: string[]) => {
+        if (!headers.includes("vendorName") || !headers.includes("amount") || !headers.includes("date")) {
+          throw Error("Invalid CSV file");
+        }
+      })
+      .on("data", (data: Pick<Bill, "vendorName" | "amount" | "date">) => newBills.push({ id: uuidv4(), ...data })) // Collect each row of CSV data
       .on("end", () => {
         // Dedupe Bills
         newBills.forEach((newBill) => {
