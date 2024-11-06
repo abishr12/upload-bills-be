@@ -26,8 +26,8 @@ app.use(
     origin: "http://localhost:3000",
   }),
 );
-app.use(helmet());
-app.use(rateLimiter);
+// app.use(helmet());
+// app.use(rateLimiter);
 
 // Request logging
 app.use(requestLogger);
