@@ -90,44 +90,49 @@ export class BillsService {
     );
   }
 
-  async uploadBills(req: Request): Promise<undefined> {
+  async uploadBills(req: Request): Promise<void> {
     // Helper function to convert a buffer to a readable stream
     const bufferToStream = (buffer: Buffer) => {
       const readable = new Readable();
       readable.push(buffer);
-      readable.push(null); // Signifies the end of the stream
+      readable.push(null);
       return readable;
     };
 
-    // TODO: generate random UUID for each bill
     const bills = await this.billsRepository.findAllAsync();
     const newBills: Bill[] = [];
-
-    // @ts-ignore
+    //@ts-ignore
     const stream = bufferToStream(req.file.buffer);
 
-    await stream
-      .pipe(csv())
-      .on("headers", (headers: string[]) => {
-        if (!headers.includes("vendorName") || !headers.includes("amount") || !headers.includes("date")) {
-          throw Error("Invalid CSV file");
-        }
-      })
-      .on("data", (data: Pick<Bill, "vendorName" | "amount" | "date">) => newBills.push({ id: uuidv4(), ...data })) // Collect each row of CSV data
-      .on("end", () => {
-        // Dedupe Bills
-        newBills.forEach((newBill) => {
-          if (!this.isDuplicate(newBill, bills)) {
-            bills.push(newBill);
+    await new Promise<void>((resolve, reject) => {
+      stream
+        .pipe(csv())
+        .on("headers", (headers: string[]) => {
+          // Validate CSV Schema
+          if (
+            headers.length !== 3 ||
+            !headers.includes("amount") || !headers.includes("date") ||
+            !headers.includes("vendorName")
+          ) {
+            return reject(new Error("Invalid CSV file"));
           }
+        })
+        .on("data", (data: Pick<Bill, "vendorName" | "amount" | "date">) => {
+          newBills.push({ id: uuidv4(), ...data });
+        })
+        .on("end", () => {
+          newBills.forEach((newBill) => {
+            if (!this.isDuplicate(newBill, bills)) {
+              bills.push(newBill);
+            }
+          });
+          resolve();
+        })
+        .on("error", (error: Error) => {
+          console.error("Error parsing CSV:", error);
+          reject(new Error("Error parsing CSV file"));
         });
-      })
-      .on("error", (error: Error) => {
-        console.error("Error parsing CSV:", error);
-        throw Error("Error parsing CSV file");
-      });
-
-    return;
+    });
   }
 }
 
